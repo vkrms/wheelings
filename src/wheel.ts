@@ -1,8 +1,20 @@
 import * as d3 from "d3";
 
+type NodeData = string | { [key: string]: string };
+
+type NodeHierarchy =
+  | d3.HierarchyRectangularNode<NodeData>
+  | d3.HierarchyRectangularNode<unknown>;
+
+interface ArcData extends d3.DefaultArcObject {
+  x0: number;
+  x1: number;
+  y0: number;
+  y1: number;
+}
+
 async function wheel() {
-  console.log("wheel");
-  const wheelData = [];
+  const wheelData: NodeData[] = [];
 
   const promises = [
     "Angry",
@@ -25,7 +37,7 @@ async function wheel() {
     });
 }
 
-const accessor = (d) => {
+const accessor = (d: NodeHierarchy) => {
   // array
   if (Array.isArray(d)) {
     return d;
@@ -40,17 +52,11 @@ const accessor = (d) => {
   return Object.values(d)[0];
 };
 
-const size = 500;
-// function randomSize() {
-//     return Math.floor(size * Math.random())
-// }
-
-const sumBody = (d) => {
+const sumBody = (d: NodeData) => {
   return typeof d === "string" ? 1 : 0;
 };
 
-function bar(wheelData) {
-  console.log("bar");
+function bar(wheelData: NodeData[]) {
   // Specify the chart’s colors and approximate radius (it will be adjusted at the end).
   const color = d3.scaleOrdinal(
     d3.quantize(d3.interpolateRainbow, wheelData.length + 1)
@@ -58,15 +64,16 @@ function bar(wheelData) {
   const radius = 928 / 2;
 
   // Prepare the layout.
-  const partition = (data) =>
+  const partition = (data: NodeData[]) =>
     d3.partition().size([2 * Math.PI, radius])(
+      //@ts-expect-error it works fine!
       d3.hierarchy(data, accessor).sum(sumBody)
     );
   // .sort((a, b) => b.value - a.value));
 
   // Create the arc
   const arc = d3
-    .arc()
+    .arc<ArcData>()
     .startAngle((d) => d.x0)
     .endAngle((d) => d.x1)
     .padAngle((d) => Math.min((d.x1 - d.x0) / 2, 0.005))
@@ -87,15 +94,17 @@ function bar(wheelData) {
     .data(root.descendants().filter((d) => d.depth))
     .join("path")
     .attr("fill", (d) => {
-      while (d.depth > 1) d = d.parent;
+      while (d.depth > 1) d = d.parent!;
       return color(getKey(d));
     })
+
+    // @ts-expect-error it works fine!
     .attr("d", arc)
-    .attr("class", (d) => {
-      console.log({ d });
-      const temp = Object.keys(d.parent.data)[0];
-      return "--sup --" + temp;
-    })
+    // .attr("class", (d) => {
+    //   console.log({ d });
+    //   const temp = Object.keys(d.parent.data)[0];
+    //   return "--sup --" + temp;
+    // })
     .append("title");
   // .text((d) => `${d.ancestors().map(getKey).reverse().join("/")}\n`);
 
@@ -129,12 +138,12 @@ function bar(wheelData) {
   return visual;
 }
 
-function getKey(obj): string {
-  return typeof obj.data === "string" ? obj.data : Object.keys(obj.data)[0];
+function getKey(arg: d3.HierarchyRectangularNode<unknown>): string {
+  const nodeData = arg.data as NodeData;
+  return typeof nodeData === "string" ? nodeData : Object.keys(nodeData)[0];
 }
 
-function autoBox() {
-  console.log("autoBox");
+function autoBox(this: SVGGraphicsElement) {
   document.body.appendChild(this);
   const { x, y, width, height } = this.getBBox();
   document.body.removeChild(this);

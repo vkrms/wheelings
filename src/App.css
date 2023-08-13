@@ -48,7 +48,7 @@
 }
 
 .wheel:after {
-    content: "";
+    /* content: ""; */
     height: 32px;
     width: 4px;
     background: orangered;
@@ -65,6 +65,7 @@
     border-radius: 100%;
     aspect-ratio: 1/1;
     overflow: hidden;
+    cursor: ns-resize;
 }
 
 .b.wheel {
