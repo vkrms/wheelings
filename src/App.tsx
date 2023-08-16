@@ -4,13 +4,11 @@ import { ReactComponent as Text } from "../data/text.md";
 
 import { wheel } from "./wheel";
 
-type TouchOrMouseEvent<T> = React.MouseEvent<T> | React.TouchEvent<T>;
-
 function App() {
   console.log("rererendered");
   const [visual, setVisual] = useState<SVGSVGElement | void | null>();
 
-  const subject = useRef<HTMLDivElement | void | null>(null);
+  const subject = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     // console.log("useEffect");
@@ -19,15 +17,15 @@ function App() {
     const wheelRef = subject.current;
 
     if (wheelRef) {
-      wheelRef.addEventListener("touchstart", start, false);
-      wheelRef.addEventListener("touchmove", rotate, false);
+      wheelRef.addEventListener("touchstart", touchStart, false);
+      wheelRef.addEventListener("touchmove", touchRotate, false);
       wheelRef.addEventListener("touchend", stop, false);
     }
 
     return () => {
       if (wheelRef) {
-        wheelRef.removeEventListener("touchstart", start, false);
-        wheelRef.removeEventListener("touchmove", rotate, false);
+        wheelRef.removeEventListener("touchstart", touchStart, false);
+        wheelRef.removeEventListener("touchmove", touchRotate, false);
         wheelRef.removeEventListener("touchend", stop, false);
       }
     };
@@ -45,24 +43,30 @@ function App() {
 
   const R2D = 180 / Math.PI;
 
-  function start(e: TouchOrMouseEvent<HTMLDivElement>) {
+  function mouseStart(e: React.MouseEvent<HTMLDivElement>) {
+    start(e.currentTarget as EventTarget & HTMLElement, e.clientX, e.clientY);
+  }
+
+  function touchStart(e: TouchEvent) {
+    e.preventDefault();
     active = true;
-    let clientX: number = 0,
-      clientY: number = 0;
+    const touch = e.touches[0];
 
-    if (e instanceof TouchEvent) {
-      const touch = e.touches[0];
-      clientX = touch.clientX;
-      clientY = touch.clientY;
-    } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
-    console.log("start");
+    start(
+      e.currentTarget as EventTarget & HTMLElement,
+      touch.clientX,
+      touch.clientY
+    );
+  }
 
-    // e.preventDefault();
-
-    const bb = e.currentTarget.getBoundingClientRect(),
+  function start(
+    el: (EventTarget & HTMLElement) | null,
+    clientX: number,
+    clientY: number
+  ) {
+    active = true;
+    if (!el) return;
+    const bb = el.getBoundingClientRect(),
       t = bb.top,
       l = bb.left,
       h = bb.height,
@@ -70,45 +74,36 @@ function App() {
 
     (center.x = l + w / 2), (center.y = t + h / 2);
 
+    console.log("start");
     const x = clientX - center.x,
       y = clientY - center.y;
     startAngle = R2D * Math.atan2(y, x);
-    return;
   }
 
-  function rotate(e: TouchOrMouseEvent<HTMLDivElement>) {
-    if (!active) return;
-
+  function mouseRotate(e: React.MouseEvent) {
     e.preventDefault();
-    let x: number = 0,
-      y: number = 0;
 
-    // const instance = typeof e;
-    console.log(e);
-
-    if (e instanceof TouchEvent) {
-      const touch = e.touches[0];
-      console.log("yep", touch.clientX, touch.clientY);
-      x = touch.clientX - center.x;
-      y = touch.clientY - center.y;
-    } else {
-      console.log("sup", e.clientX, e.clientY);
-      x = e.clientX - center.x;
+    const x = e.clientX - center.x,
       y = e.clientY - center.y;
-    }
 
-    // normal values
-    //rotate 6.388436526322213 -29.43183432514928 -35.82027085147149
+    rotate(e.currentTarget as EventTarget & HTMLElement, x, y);
+  }
 
-    // i got
-    //rotate 111.31790302279376 -23.68209697720624 -135
+  function touchRotate(e: TouchEvent) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const x = touch.clientX - center.x,
+      y = touch.clientY - center.y;
+    rotate(e.currentTarget as HTMLBaseElement, x, y);
+  }
 
+  function rotate(el: EventTarget & HTMLElement, x: number, y: number) {
+    if (!active) return;
     const d = R2D * Math.atan2(y, x);
 
     rotation = d - startAngle;
     console.log("rotate", rotation, d, startAngle, x, y);
-    return (e.currentTarget.style.transform =
-      "rotate(" + (angle + rotation + "deg"));
+    return (el.style.transform = "rotate(" + (angle + rotation + "deg"));
   }
 
   function stop() {
@@ -118,15 +113,15 @@ function App() {
   }
 
   const props = {
-    // onTouchStart: start,
-    onMouseDown: start,
-    onMouseMove: rotate,
+    onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => {
+      mouseStart(e);
+    },
+    // onMouseMove: mouseRotate,
+    onMouseMove: (e: React.MouseEvent<HTMLDivElement>) => {
+      mouseRotate(e);
+    },
     onMouseUp: stop,
-    // onTouchEnd: stop,
     ref: subject,
-  };
-
-  const otherProps = {
     dangerouslySetInnerHTML: { __html: visual?.outerHTML || "" },
     className: "wheel",
   };
@@ -135,7 +130,7 @@ function App() {
     <>
       <div className="flex">
         <div className="wheel-wrapper">
-          <div {...{ ...props, ...otherProps }} />
+          <div {...props} />
         </div>
         <div className="text-wrapper">
           <Text />
