@@ -1,3 +1,5 @@
+@import './styles/mixins.scss';
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -45,19 +47,6 @@
   width: 320px;
   height: 320px;
   background-color: hotpink;
-}
-
-.wheel:after {
-    /* content: ""; */
-    height: 32px;
-    width: 4px;
-    background: orangered;
-    display: block;
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: -16px;
-    margin: auto;
 }
 
 .wheel {
@@ -249,9 +238,29 @@ div#content {
     /* align-items: center; */
 }
 
+
 .wheel-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+
+  @include small {
     flex: 2;
+  }
 }
+
+// .wheel-wrapper:after {
+//     content: "";
+//     background: hotpink;
+//     display: block;
+//     position: absolute;
+//     top: 0;
+//     left: 0;
+//     right: 0;
+//     width: 4px;
+//     height: 16px;
+//     margin: auto;
+// }
 
 .text-wrapper {
     flex: 2;
@@ -259,7 +268,7 @@ div#content {
 }
 
 .wheel {
-    min-width: 296px;
+    min-width: 280px;
     max-width: 700px;
 }
 
@@ -281,4 +290,19 @@ div#content {
 
 .--Sad {
     fill: #1b98e0;
+}
+
+.arrow {
+  color: hotpink;
+  font-size: 32px;
+  line-height: 1;
+  margin-bottom: -8px;
+  z-index: 1;
+  position: relative;
+}
+
+.rotator {
+  user-select: none;
+  overflow: hidden;
+  aspect-ratio: 1/1;
 }

@@ -1,4 +1,7 @@
 import * as d3 from "d3";
+import { useRef, useEffect } from "react";
+
+window.d3 = d3;
 
 type NodeData = string | { [key: string]: string };
 
@@ -13,7 +16,7 @@ interface ArcData extends d3.DefaultArcObject {
   y1: number;
 }
 
-async function wheel() {
+async function getData() {
   const wheelData: NodeData[] = [];
 
   const promises = [
@@ -27,10 +30,11 @@ async function wheel() {
 
   return Promise.all(promises)
     .then((imported) => {
+      console.log("got all data", { imported });
       imported.forEach((data) => {
         wheelData.push(...data.default);
       });
-      return bar(wheelData);
+      return wheelData;
     })
     .catch((error) => {
       console.error(error);
@@ -56,7 +60,8 @@ const sumBody = (d: NodeData) => {
   return typeof d === "string" ? 1 : 0;
 };
 
-function bar(wheelData: NodeData[]) {
+function bar(wheelData: NodeData[], svgRef) {
+  console.log("bar", { wheelData, svgRef });
   // Specify the chart’s colors and approximate radius (it will be adjusted at the end).
   const color = d3.scaleOrdinal(
     d3.quantize(d3.interpolateRainbow, wheelData.length + 1)
@@ -83,44 +88,56 @@ function bar(wheelData: NodeData[]) {
 
   const root = partition(wheelData);
 
+  const data = root
+    .descendants()
+    .filter((d) => d.depth && ((d.y0 + d.y1) / 2) * (d.x1 - d.x0) > 10);
+
+  const dataB = root.descendants().filter((d) => d.depth);
+
+  console.log({ data });
+
   // Create the SVG container.
-  const svg = d3.create("svg");
+  // const svg = d3.create("svg");
+  const svg = d3.select(svgRef);
+
+  console.log({ svg });
 
   // Add an arc for each element
   svg
     .append("g")
     .attr("fill-opacity", 0.7)
     .selectAll("path")
-    .data(root.descendants().filter((d) => d.depth))
+    .data(dataB)
+    // .on("click", clicked)
     .join("path")
     .attr("fill", (d) => {
       while (d.depth > 1) d = d.parent!;
       return color(getKey(d));
     })
+    .attr("id", (d) => {
+      // console.log({ d });
+      return 1;
+    })
 
     // @ts-expect-error it works fine!
-    .attr("d", arc)
-    // .attr("class", (d) => {
-    //   console.log({ d });
-    //   const temp = Object.keys(d.parent.data)[0];
-    //   return "--sup --" + temp;
-    // })
-    .append("title");
+    .attr("d", arc);
+  // .attr("class", (d) => {
+  //   console.log({ d });
+  //   const temp = Object.keys(d.parent.data)[0];
+  //   return "--sup --" + temp;
+  // })
+  // .append("title");
   // .text((d) => `${d.ancestors().map(getKey).reverse().join("/")}\n`);
 
   // Add a label for each element.
   svg
     .append("g")
-    .attr("pointer-events", "none")
+    // .attr("pointer-events", "none")
     .attr("text-anchor", "middle")
     .attr("font-size", 10)
     .attr("font-family", "sans-serif")
     .selectAll("text")
-    .data(
-      root
-        .descendants()
-        .filter((d) => d.depth && ((d.y0 + d.y1) / 2) * (d.x1 - d.x0) > 10)
-    )
+    .data(data)
     .join("text")
     .attr("transform", function (d) {
       const x = (((d.x0 + d.x1) / 2) * 180) / Math.PI;
@@ -130,12 +147,21 @@ function bar(wheelData: NodeData[]) {
     .attr("dy", "0.35em")
     .text(getKey)
     .attr("class", "wheel-label");
+  // .on("click", clicked)
 
-  svg.attr("width", 900);
-
+  // svg.attr("width", 900);
   // The autoBox function adjusts the SVG’s viewBox to the dimensions of its contents.
-  const visual = svg.attr("viewBox", autoBox).node();
-  return visual;
+  svg.attr("viewBox", autoBox);
+
+  const node = svg.node();
+  console.dir(node);
+  // svg.on("click", function (d) {
+  //   console.log(d);
+  //   d3.select(this).attr("fill", "rgb(0," + d + ",0)");
+  // });
+
+  // function clicked({ ...rest }) {
+  //   console.log("yay", { ...rest });
 }
 
 function getKey(arg: d3.HierarchyRectangularNode<unknown>): string {
@@ -144,10 +170,27 @@ function getKey(arg: d3.HierarchyRectangularNode<unknown>): string {
 }
 
 function autoBox(this: SVGGraphicsElement) {
-  document.body.appendChild(this);
+  console.log("that", this);
+  // document.body.appendChild(this);
   const { x, y, width, height } = this.getBBox();
-  document.body.removeChild(this);
+  // document.body.removeChild(this);
   return [x, y, width, height];
 }
 
-export { wheel };
+const Wheel = () => {
+  const wheel = useRef(null);
+
+  useEffect(() => {
+    getData().then((data) => {
+      if (data) bar(data, wheel.current);
+    });
+  }, []);
+
+  return (
+    <div className="lol">
+      <svg ref={wheel} className="wheel"></svg>
+    </div>
+  );
+};
+
+export default Wheel;

@@ -1,18 +1,56 @@
 import { useEffect, useState, useRef } from "react";
-import "./App.css";
+import "./App.scss";
 import { ReactComponent as Text } from "../data/text.md";
 
-import { wheel } from "./wheel";
+import Wheel from "./Wheel";
 
 function App() {
   console.log("rererendered");
-  const [visual, setVisual] = useState<SVGSVGElement | void | null>();
+  // const [visual, setVisual] = useState<SVGSVGElement | void | null>();
+
+  const emotionsArr = [];
+
+  function parents({ data, parent }) {
+    let emotion = "%";
+    switch (typeof data) {
+      case "string":
+        emotion = data;
+        break;
+      case "object":
+        emotion = Object.keys(data)[0];
+        break;
+    }
+
+    emotionsArr.push(emotion);
+
+    console.log({ emotion });
+    // const result = {
+    // 	top: data,
+    // 	middle: '',
+    // 	base: '',
+    // }
+
+    if (parent) parents(parent);
+  }
 
   const subject = useRef<HTMLDivElement | null>(null);
 
+  const [emotions, setEmotions] = useState({
+    top: "%%%",
+    middle: "%%",
+    base: "%",
+  });
+
+  const rotRef = useRef({
+    angle: 0,
+    rotation: 0,
+    active: false,
+    startAngle: 0,
+    center: { x: 0, y: 0 },
+  });
+
   useEffect(() => {
-    // console.log("useEffect");
-    wheel().then(setVisual);
+    // wheel(subject.current);
 
     const wheelRef = subject.current;
 
@@ -31,16 +69,6 @@ function App() {
     };
   }, []);
 
-  let angle = 0,
-    rotation = 0,
-    active = false,
-    startAngle = 0;
-
-  const center = {
-    x: 0,
-    y: 0,
-  };
-
   const R2D = 180 / Math.PI;
 
   function mouseStart(e: React.MouseEvent<HTMLDivElement>) {
@@ -48,8 +76,8 @@ function App() {
   }
 
   function touchStart(e: TouchEvent) {
-    e.preventDefault();
-    active = true;
+    // e.preventDefault();
+    rotRef.current.active = true;
     const touch = e.touches[0];
 
     start(
@@ -64,7 +92,7 @@ function App() {
     clientX: number,
     clientY: number
   ) {
-    active = true;
+    rotRef.current.active = true;
     if (!el) return;
     const bb = el.getBoundingClientRect(),
       t = bb.top,
@@ -72,45 +100,69 @@ function App() {
       h = bb.height,
       w = bb.width;
 
-    (center.x = l + w / 2), (center.y = t + h / 2);
+    (rotRef.current.center.x = l + w / 2),
+      (rotRef.current.center.y = t + h / 2);
 
     console.log("start");
-    const x = clientX - center.x,
-      y = clientY - center.y;
-    startAngle = R2D * Math.atan2(y, x);
+    const x = clientX - rotRef.current.center.x,
+      y = clientY - rotRef.current.center.y;
+    rotRef.current.startAngle = R2D * Math.atan2(y, x);
   }
 
   function mouseRotate(e: React.MouseEvent) {
-    e.preventDefault();
+    // e.preventDefault();
 
-    const x = e.clientX - center.x,
-      y = e.clientY - center.y;
+    const x = e.clientX - rotRef.current.center.x,
+      y = e.clientY - rotRef.current.center.y;
 
     rotate(e.currentTarget as EventTarget & HTMLElement, x, y);
   }
 
   function touchRotate(e: TouchEvent) {
-    e.preventDefault();
+    // e.preventDefault();
     const touch = e.touches[0];
-    const x = touch.clientX - center.x,
-      y = touch.clientY - center.y;
+    const x = touch.clientX - rotRef.current.center.x,
+      y = touch.clientY - rotRef.current.center.y;
     rotate(e.currentTarget as HTMLBaseElement, x, y);
   }
 
   function rotate(el: EventTarget & HTMLElement, x: number, y: number) {
-    if (!active) return;
+    if (!rotRef.current.active) return;
     const d = R2D * Math.atan2(y, x);
 
-    rotation = d - startAngle;
-    console.log("rotate", rotation, d, startAngle, x, y);
-    return (el.style.transform = "rotate(" + (angle + rotation + "deg"));
+    rotRef.current.rotation = d - rotRef.current.startAngle;
+    // console.x/xlog("rotate", rotation, d, startAngle, x, y);
+    return (el.style.transform =
+      "rotate(" + (rotRef.current.angle + rotRef.current.rotation + "deg"));
   }
 
   function stop() {
-    angle += rotation;
-    console.log("stopped", rotation);
-    return (active = false);
+    rotRef.current.angle += rotRef.current.rotation;
+    console.log("stopped", rotRef.current.rotation);
+
+    // get the top-most path from the wheel
+    const paths = document.querySelectorAll("path");
+    const sorted = Array.from(paths).sort((a, b) => {
+      const aBB = a.getBoundingClientRect();
+      const bBB = b.getBoundingClientRect();
+      return aBB.top - bBB.top;
+    });
+
+    const topPath = sorted[0];
+    const datum = topPath.__data__;
+    console.log({ datum });
+    parents(datum);
+
+    const [top, middle, base] = emotionsArr;
+
+    console.log({ emotionsArr });
+
+    setEmotions({ top, middle, base });
+
+    return (rotRef.current.active = false);
   }
+
+  // console.log({ visual });
 
   const props = {
     onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => {
@@ -121,16 +173,22 @@ function App() {
       mouseRotate(e);
     },
     onMouseUp: stop,
-    ref: subject,
-    dangerouslySetInnerHTML: { __html: visual?.outerHTML || "" },
-    className: "wheel",
+    // ref: subject,
+    className: "rotator",
   };
 
   return (
     <>
       <div className="flex">
         <div className="wheel-wrapper">
-          <div {...props} />
+          <h1>{emotions.top}</h1>
+          <h2>{emotions.middle}</h2>
+          <h3>{emotions.base}</h3>
+
+          <div className="arrow">&darr;</div>
+          <div {...props}>
+            <Wheel />
+          </div>
         </div>
         <div className="text-wrapper">
           <Text />
