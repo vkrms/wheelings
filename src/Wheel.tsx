@@ -1,13 +1,7 @@
 import * as d3 from "d3";
 import { useRef, useEffect } from "react";
 
-window.d3 = d3;
-
-type NodeData = string | { [key: string]: string };
-
-type NodeHierarchy =
-  | d3.HierarchyRectangularNode<NodeData>
-  | d3.HierarchyRectangularNode<unknown>;
+import type { NodeData, NodeHierarchy } from "./types";
 
 interface ArcData extends d3.DefaultArcObject {
   x0: number;
@@ -60,7 +54,7 @@ const sumBody = (d: NodeData) => {
   return typeof d === "string" ? 1 : 0;
 };
 
-function bar(wheelData: NodeData[], svgRef) {
+function bar(wheelData: NodeData[], svgRef: SVGSVGElement | null) {
   console.log("bar", { wheelData, svgRef });
   // Specify the chart’s colors and approximate radius (it will be adjusted at the end).
   const color = d3.scaleOrdinal(
@@ -74,7 +68,6 @@ function bar(wheelData: NodeData[], svgRef) {
       //@ts-expect-error it works fine!
       d3.hierarchy(data, accessor).sum(sumBody)
     );
-  // .sort((a, b) => b.value - a.value));
 
   // Create the arc
   const arc = d3
@@ -96,11 +89,8 @@ function bar(wheelData: NodeData[], svgRef) {
 
   console.log({ data });
 
-  // Create the SVG container.
-  // const svg = d3.create("svg");
+  // Select the SVG container.
   const svg = d3.select(svgRef);
-
-  console.log({ svg });
 
   // Add an arc for each element
   svg
@@ -108,26 +98,14 @@ function bar(wheelData: NodeData[], svgRef) {
     .attr("fill-opacity", 0.7)
     .selectAll("path")
     .data(dataB)
-    // .on("click", clicked)
     .join("path")
     .attr("fill", (d) => {
       while (d.depth > 1) d = d.parent!;
       return color(getKey(d));
     })
-    .attr("id", (d) => {
-      // console.log({ d });
-      return 1;
-    })
 
     // @ts-expect-error it works fine!
     .attr("d", arc);
-  // .attr("class", (d) => {
-  //   console.log({ d });
-  //   const temp = Object.keys(d.parent.data)[0];
-  //   return "--sup --" + temp;
-  // })
-  // .append("title");
-  // .text((d) => `${d.ancestors().map(getKey).reverse().join("/")}\n`);
 
   // Add a label for each element.
   svg
@@ -147,21 +125,8 @@ function bar(wheelData: NodeData[], svgRef) {
     .attr("dy", "0.35em")
     .text(getKey)
     .attr("class", "wheel-label");
-  // .on("click", clicked)
-
-  // svg.attr("width", 900);
   // The autoBox function adjusts the SVG’s viewBox to the dimensions of its contents.
   svg.attr("viewBox", autoBox);
-
-  const node = svg.node();
-  console.dir(node);
-  // svg.on("click", function (d) {
-  //   console.log(d);
-  //   d3.select(this).attr("fill", "rgb(0," + d + ",0)");
-  // });
-
-  // function clicked({ ...rest }) {
-  //   console.log("yay", { ...rest });
 }
 
 function getKey(arg: d3.HierarchyRectangularNode<unknown>): string {
@@ -169,16 +134,14 @@ function getKey(arg: d3.HierarchyRectangularNode<unknown>): string {
   return typeof nodeData === "string" ? nodeData : Object.keys(nodeData)[0];
 }
 
-function autoBox(this: SVGGraphicsElement) {
-  console.log("that", this);
-  // document.body.appendChild(this);
+function autoBox(this: SVGGraphicsElement | null) {
+  if (this === null) return false;
   const { x, y, width, height } = this.getBBox();
-  // document.body.removeChild(this);
   return [x, y, width, height];
 }
 
 const Wheel = () => {
-  const wheel = useRef(null);
+  const wheel = useRef<SVGSVGElement | null>(null);
 
   useEffect(() => {
     getData().then((data) => {

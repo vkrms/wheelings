@@ -4,31 +4,25 @@ import { ReactComponent as Text } from "../data/text.md";
 
 import Wheel from "./Wheel";
 
+import type { NodeHierarchy } from "./types";
+
 function App() {
   console.log("rererendered");
-  // const [visual, setVisual] = useState<SVGSVGElement | void | null>();
 
-  const emotionsArr = [];
+  const emotionsArr: string[] = [];
 
-  function parents({ data, parent }) {
+  function parents({ data, parent }: NodeHierarchy) {
     let emotion = "%";
     switch (typeof data) {
       case "string":
         emotion = data;
         break;
       case "object":
-        emotion = Object.keys(data)[0];
+        emotion = Object.keys(data || {})[0];
         break;
     }
 
     emotionsArr.push(emotion);
-
-    console.log({ emotion });
-    // const result = {
-    // 	top: data,
-    // 	middle: '',
-    // 	base: '',
-    // }
 
     if (parent) parents(parent);
   }
@@ -50,8 +44,6 @@ function App() {
   });
 
   useEffect(() => {
-    // wheel(subject.current);
-
     const wheelRef = subject.current;
 
     if (wheelRef) {
@@ -76,7 +68,7 @@ function App() {
   }
 
   function touchStart(e: TouchEvent) {
-    // e.preventDefault();
+    e.preventDefault();
     rotRef.current.active = true;
     const touch = e.touches[0];
 
@@ -110,7 +102,7 @@ function App() {
   }
 
   function mouseRotate(e: React.MouseEvent) {
-    // e.preventDefault();
+    e.preventDefault();
 
     const x = e.clientX - rotRef.current.center.x,
       y = e.clientY - rotRef.current.center.y;
@@ -119,7 +111,7 @@ function App() {
   }
 
   function touchRotate(e: TouchEvent) {
-    // e.preventDefault();
+    e.preventDefault();
     const touch = e.touches[0];
     const x = touch.clientX - rotRef.current.center.x,
       y = touch.clientY - rotRef.current.center.y;
@@ -131,7 +123,6 @@ function App() {
     const d = R2D * Math.atan2(y, x);
 
     rotRef.current.rotation = d - rotRef.current.startAngle;
-    // console.x/xlog("rotate", rotation, d, startAngle, x, y);
     return (el.style.transform =
       "rotate(" + (rotRef.current.angle + rotRef.current.rotation + "deg"));
   }
@@ -148,14 +139,12 @@ function App() {
       return aBB.top - bBB.top;
     });
 
-    const topPath = sorted[0];
+    // set current emotion
+    const topPath = sorted[0] as SVGPathElement & { __data__: NodeHierarchy };
     const datum = topPath.__data__;
-    console.log({ datum });
     parents(datum);
 
     const [top, middle, base] = emotionsArr;
-
-    console.log({ emotionsArr });
 
     setEmotions({ top, middle, base });
 
@@ -168,12 +157,10 @@ function App() {
     onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => {
       mouseStart(e);
     },
-    // onMouseMove: mouseRotate,
     onMouseMove: (e: React.MouseEvent<HTMLDivElement>) => {
       mouseRotate(e);
     },
     onMouseUp: stop,
-    // ref: subject,
     className: "rotator",
   };
 
