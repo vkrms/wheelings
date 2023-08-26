@@ -15,3 +15,7 @@ So I present you this useful rotating feelings wheel.
 Rendered with d3.js from .yaml files, it allows for feelings and emotions to be added as soon as they are discovered by scientists!
 
 Next up: periodic table of feelings...
+
+## How to use
+
+Ok, so let's say you're feeling something. You're not sure what that is, but it's defiitely "bad". Oh we actually have a whole "bad" sector. Let's spin to the pink and see, maybe you're feeling stressed? Yeah looks like it. When you think about it, you realize you've been feeling overwhelmed by all the stuff you have to to do at your job and also in your life. Ok now we got something to think about. I suggest taking at least 5 minutes to write down your thoughts and feelings around this word, that situation. Also try to realize if there’s a part of your body which is partularly afflicted by this feeling.
