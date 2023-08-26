@@ -62,13 +62,13 @@
     background-size: contain;
 }
 
-@font-face {
-  font-family: 'moon';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url(./assets/fonts/moon-reg.woff2) format("woff2")
-}
+// @font-face {
+//   font-family: 'moon';
+//   font-style: normal;
+//   font-weight: 400;
+//   font-display: swap;
+//   src: url(./assets/fonts/moon-reg.woff2) format("woff2")
+// }
 
 @font-face {
   font-family: 'moon';
@@ -78,13 +78,13 @@
   src: url(./assets/fonts/moon-bold.woff2) format("woff2")
 }
 
-@font-face {
-  font-family: 'moon';
-  font-style: normal;
-  font-weight: 300;
-  font-display: swap;
-  src: url(./assets/fonts/moon-light.woff2) format("woff2")
-}
+// @font-face {
+//   font-family: 'moon';
+//   font-style: normal;
+//   font-weight: 300;
+//   font-display: swap;
+//   src: url(./assets/fonts/moon-light.woff2) format("woff2")
+// }
 
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -117,6 +117,15 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  font-size: 80%;
+  
+  @include small {
+    font-size: 100%;
+  }
+}
+
+p {
+  font-size: 16px;
 }
 
 h1 {
@@ -204,15 +213,15 @@ svg {
     padding: 0 32px;
 }
 
-h1, h2, p {
+h1, h2, h3, p {
     margin: 0 0 1em 0;
 }
 
-h1, h2 {
+h1, h2, h3 {
     font-family: 'moon', sans-serif;
 }
 
-h1 {
+h1, h2 {
   margin-bottom: 0;
 }
 
@@ -305,4 +314,21 @@ div#content {
   user-select: none;
   overflow: hidden;
   aspect-ratio: 1/1;
+}
+
+h2 {
+  font-size: calc(3.2em * 0.61804 * var(--factor));
+}
+
+h3 {
+  font-size: calc(3.2em * 0.61804 * 0.61804 * var(--factor));
+  margin: 0 0 1em;
+}
+
+:root {
+  --factor: 1.333;
+}
+
+.text-wrapper h2 {
+  margin-bottom: 0.333em;
 }

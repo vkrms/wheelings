@@ -7,9 +7,8 @@ import Wheel from "./Wheel";
 import type { NodeHierarchy } from "./types";
 
 function App() {
-  console.log("rererendered");
-
-  const emotionsArr: string[] = [];
+  let emotionsArr: string[] = [];
+  // console.log("rerererendered");
 
   function parents({ data, parent }: NodeHierarchy) {
     let emotion = "%";
@@ -64,6 +63,7 @@ function App() {
   const R2D = 180 / Math.PI;
 
   function mouseStart(e: React.MouseEvent<HTMLDivElement>) {
+    rotRef.current.active = true;
     start(e.currentTarget as EventTarget & HTMLElement, e.clientX, e.clientY);
   }
 
@@ -95,7 +95,7 @@ function App() {
     (rotRef.current.center.x = l + w / 2),
       (rotRef.current.center.y = t + h / 2);
 
-    console.log("start");
+    // console.log("start");
     const x = clientX - rotRef.current.center.x,
       y = clientY - rotRef.current.center.y;
     rotRef.current.startAngle = R2D * Math.atan2(y, x);
@@ -112,10 +112,11 @@ function App() {
 
   function touchRotate(e: TouchEvent) {
     e.preventDefault();
+
     const touch = e.touches[0];
     const x = touch.clientX - rotRef.current.center.x,
       y = touch.clientY - rotRef.current.center.y;
-    rotate(e.currentTarget as HTMLBaseElement, x, y);
+    rotate(e.currentTarget as EventTarget & HTMLElement, x, y);
   }
 
   function rotate(el: EventTarget & HTMLElement, x: number, y: number) {
@@ -129,7 +130,7 @@ function App() {
 
   function stop() {
     rotRef.current.angle += rotRef.current.rotation;
-    console.log("stopped", rotRef.current.rotation);
+    // console.log("stopped", rotRef.current.rotation);
 
     // get the top-most path from the wheel
     const paths = document.querySelectorAll("path");
@@ -144,14 +145,15 @@ function App() {
     const datum = topPath.__data__;
     parents(datum);
 
+    // console.log({ emotionsArr });
     const [top, middle, base] = emotionsArr;
+    // manual flush due to a mobile version bug
+    emotionsArr = [];
 
     setEmotions({ top, middle, base });
 
     return (rotRef.current.active = false);
   }
-
-  // console.log({ visual });
 
   const props = {
     onMouseDown: (e: React.MouseEvent<HTMLDivElement>) => {
@@ -162,6 +164,7 @@ function App() {
     },
     onMouseUp: stop,
     className: "rotator",
+    ref: subject,
   };
 
   return (

@@ -24,7 +24,6 @@ async function getData() {
 
   return Promise.all(promises)
     .then((imported) => {
-      console.log("got all data", { imported });
       imported.forEach((data) => {
         wheelData.push(...data.default);
       });
@@ -55,7 +54,6 @@ const sumBody = (d: NodeData) => {
 };
 
 function bar(wheelData: NodeData[], svgRef: SVGSVGElement | null) {
-  console.log("bar", { wheelData, svgRef });
   // Specify the chart’s colors and approximate radius (it will be adjusted at the end).
   const color = d3.scaleOrdinal(
     d3.quantize(d3.interpolateRainbow, wheelData.length + 1)
@@ -86,8 +84,6 @@ function bar(wheelData: NodeData[], svgRef: SVGSVGElement | null) {
     .filter((d) => d.depth && ((d.y0 + d.y1) / 2) * (d.x1 - d.x0) > 10);
 
   const dataB = root.descendants().filter((d) => d.depth);
-
-  console.log({ data });
 
   // Select the SVG container.
   const svg = d3.select(svgRef);
